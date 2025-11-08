@@ -11,7 +11,7 @@ const userRegistrationValidator = () => {
             .trim()
             .notEmpty().withMessage("Username is required")
             .isLowercase().withMessage("Username must be in lowercase")
-            .isLength({ min: 3 , max: 20 }).withMessage("Username must be between 3 and 20 characters"),
+            .isLength({ min: 3, max: 20 }).withMessage("Username must be between 3 and 20 characters"),
 
         body("password")
             .trim()
@@ -24,6 +24,21 @@ const userRegistrationValidator = () => {
     ]
 }
 
+const userLoginValidator = () => {
+    return [
+        body("email")
+            .notEmpty()
+            .withMessage("email is required")
+            .isEmail()
+            .withMessage("Email is invalid"),
+
+        body("password")
+            .notEmpty()
+            .withMessage("password is required")
+    ]
+}           
+
 export {
-    userRegistrationValidator
+    userRegistrationValidator,
+    userLoginValidator
 }

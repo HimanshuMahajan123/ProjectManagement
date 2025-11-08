@@ -2,7 +2,7 @@ import { User } from '../models/user.models.js';
 import { ApiResponse } from '../utils/api-response.js';
 import { ApiError } from '../utils/api-error.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import { sendEmail , emailVerificationMailgenContent } from '../utils/mail.js';
+import { sendEmail, emailVerificationMailgenContent } from '../utils/mail.js';
 
 const generateAccessAndRefreshTokens = async (userId) => {
     try {
@@ -73,4 +73,54 @@ const registerUser = asyncHandler(async (req, res) => {
 
 });
 
-export { registerUser };
+const login = asyncHandler(async (req, res) => {
+
+    //take email and password from request body
+    const { email, password } = req.body;
+
+    //validate inputs
+    if (!email || !password) {
+        throw new ApiError(400, "Email and password are required");
+    }
+    //check if user exists
+    const user = await User.findOne({ email });
+    if (!user) {
+        throw new ApiError(401, "Invalid email or password");
+    }
+    //check if password is correct
+    const isPasswordCorrect = await user.isPasswordCorrect(password);
+    if (!isPasswordCorrect) {
+        throw new ApiError(401, "Invalid password");
+    }
+    //generate access and refresh tokens
+    const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user._id);
+
+    //send response
+    const loggedInUser = await User.findById(user._id).select(
+        "-password -refreshToken -emailVerificationToken -emailVerificationExpiry -forgotPasswordToken -forgotPasswordExpiry"
+    )
+
+    const options = {
+        httpOnly: true,
+        secure: true
+    }
+
+    return res
+        .status(200)
+        .cookie("accessToken", accessToken, options)
+        .cookie("refreshToken", refreshToken, options)
+        .json(
+            new ApiResponse(
+                200,
+                {
+                    user: loggedInUser,
+                    accessToken,
+                    refreshToken
+                },
+                "User logged in successfully"
+            )
+        )
+
+})
+
+export { registerUser, login };
