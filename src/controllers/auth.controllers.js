@@ -37,7 +37,6 @@ const registerUser = asyncHandler(async (req, res) => {
         password,
         isEmailVerified: false
     });
-    const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user._id);
 
     //generate email verification token and save to user model 
     const { unhashedToken, hashedToken, tokenExpiry } = user.generateTemporaryToken();
